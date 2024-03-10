@@ -16,6 +16,9 @@ INITIAL_RESPONSE = 1
 COMPLETE_RESPONSE = 2
 NO_ROOM_ERROR = 3
 
+AUTHENTICATED = 200
+UNAUTHENTICATED = 401
+
 FIRST_PROMPT = '''
 Please select the option below.
 1. Create a chat room

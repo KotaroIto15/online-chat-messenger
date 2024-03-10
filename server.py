@@ -71,11 +71,11 @@ def update_connection(room_name, addr):
         }
         connections[addr] = user
 
+
 def forward_message():
     try:
         while True:
             req, client_address = sock.recvfrom(4096)
-            print('message received')
 
             room_name_len = int.from_bytes(req[:1], 'big')
             token_len = int.from_bytes(req[1:2], 'big')
@@ -87,14 +87,22 @@ def forward_message():
             if authenticate(room_name, client_address, token):
                 client = rooms[room_name][client_address]
                 user_name = client["user_name"]
+
+                header = AUTHENTICATED.to_bytes(2, 'big')
+
                 forwarded_message = '{}: {}'.format(user_name, message)
                 print(forwarded_message)
 
                 for addr in rooms[room_name]:
                     if addr != client_address:
-                        sock.sendto(forwarded_message.encode(), addr)
+                        sock.sendto(header + forwarded_message.encode(), addr)
             
                 connections[client_address]["last_active_time"] = datetime.timestamp(datetime.now())
+            else:
+                print('unauthenticated user')
+                header = UNAUTHENTICATED.to_bytes(2, 'big')
+                unauthenticated_msg = 'Your token has expired, please rejoin the chat room.'
+                sock.sendto(header + unauthenticated_msg.encode(), client_address)
     
     except:
         print('An excpetion occurred')
@@ -152,9 +160,11 @@ def join_room(room_name, user_name, host, port, token):
 
     rooms[room_name][addr] = user
 
+    header = AUTHENTICATED.to_bytes(2, 'big')
     message = f'{user_name} joined the room!!'
+
     for addr in rooms[room_name]:
-        sock.sendto(message.encode(), addr)
+        sock.sendto(header + message.encode(), addr)
 
     update_connection(room_name, addr)
     return

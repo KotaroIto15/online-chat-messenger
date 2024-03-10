@@ -52,8 +52,14 @@ def receive_message():
                 continue
 
             data, server = sock.recvfrom(4096)
-            message = data.decode()
+            auth_status = int.from_bytes(data[:2], 'big')
+
+            message = data[2:].decode()
             print(message)
+
+            if auth_status == UNAUTHENTICATED:
+                connection_established.clear()
+            
     
     except:
         print("See you again!!")
